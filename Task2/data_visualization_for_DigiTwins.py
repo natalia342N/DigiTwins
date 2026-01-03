@@ -27,9 +27,33 @@ def part1_script():
     # ------------------------------------------------------------------------------
     # plot the temperature values and the weekly mean of the temperature values
     # for the weekly mean, use the Pandas.Series.rolling() method (e.g. y.rolling())
+
+    weekly_mean = y.rolling(window='7D').mean() # Pandas Docu for rolling window operations 
+
+    plt.figure(figsize=(10, 6)) # increased fig size to avoid legend overlapping data points
+    plt.plot(x, y, color=somecolors['red'], label='Temperature (5-minutes intervals)')
+    plt.plot(x, weekly_mean, color=somecolors['very blue'], label='Weekly Mean Temperature (7-day rolling)')
+
+    plt.ylabel('Temperature in °C')
+    plt.legend()
+    plt.grid()
+    plt.savefig("Part1_Temperature_Weekly_Mean.pdf", format="pdf")  # for your report
+    plt.show()
+
+
     # use the methods plt.plot() with optional parameters color and label
     # use methods plt.ylabel(), plt.legend(), plt.grid(), plt.show()
     # hint: experiment with the sequence your commands
+
+    # using commands in order given above gives correct plots will all wanted elements (legend, grid)
+    # conclusions: plotting should be called first then we call rest of the methods with optional parameters too eg.
+    # plt.logscale('y') before plt.show() or location of the legend plt.legend(loc='upper left')
+
+    # regarding chosen colours, we decided to pick 2 contrasting ones, the daily background tempetures to be red but not too bright and eye hurting with 
+    # well contrasting blue for the weekly mean line 
+
+    # deduced latitude of the measurements: northern hemisphere
+
     # ------------------------------------------------------------------------------
 
 
