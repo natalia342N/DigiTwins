@@ -53,7 +53,10 @@ plt.show()
 ### Part 3: Correlation matrix
 
 # similarly also with matplotlib with correlation matrix, also plotting density
-# dont incldue date column, the first one
+# Convert 'Unnamed: 0' to datetime and then to minutes since start to enable correlation calculation
+data['Unnamed: 0'] = pd.to_datetime(data['Unnamed: 0'])
+min_time = data['Unnamed: 0'].min()
+data['Minutes Since Measure Start'] = (data['Unnamed: 0'] - min_time).dt.total_seconds() / 60
 data = data.drop(columns=['Unnamed: 0'])
 corr = data.corr()  # dont include date column
 fig, ax = plt.subplots(figsize=(12, 10))
