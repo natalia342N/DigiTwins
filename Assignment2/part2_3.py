@@ -1,14 +1,8 @@
-# Dealing with point clouds and generating several plots at once.
-# Visualize the correlation of solar irradiation with temperature and the correlation of solar irradiation with relative moisture.
-# Do this by plotting the point clouds and adding a linear trendline. See the code comments for more details.
-# Put the figure in the report with a general description. Describe your code in the report.
-
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy.stats import gaussian_kde
 
-
+### Part 2: Point clouds with trendlines
 # loading weather data
 data = pd.read_csv('weather_data.csv')
 # Extracting relevant columns
@@ -56,11 +50,7 @@ plt.savefig('solar_irradiation_correlations.png')
 plt.show()
 
 
-# Visualize the correlation for each pair of columns of your dataset in one single figure.
-# Do it by visualizing the so-called correlation matrix of your dataset. See code comments for more details.
-# Put the figure in the report with a general description. Describe your code in the report and answer the following questions:
-# What can be concluded from this figure?
-# Explain the connection between this visualization and the visualizations created in Part 2.
+### Part 3: Correlation matrix
 
 # similarly also with matplotlib with correlation matrix, also plotting density
 # dont incldue date column, the first one
