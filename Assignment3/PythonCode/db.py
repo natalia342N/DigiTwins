@@ -44,6 +44,14 @@ def create_table_energy_values(conn, table_name):
     #For timestamps you will need as type DATETIME
     cursor = conn.cursor()
     #Your code here
+    cursor.execute(f'''
+        CREATE TABLE IF NOT EXISTS {table_name} (
+            TagID INTEGER NOT NULL UNIQUE PRIMARY KEY,
+            Timestamp DATETIME NOT NULL PRIMARY KEY,
+            Value REAL NOT NULL,
+        );
+    ''')
+    conn.commit()
     conn.commit()
 
 def insert_data_from_energy_values_csv(conn, table_name, data):
@@ -60,6 +68,25 @@ def insert_data_from_energy_values_csv(conn, table_name, data):
     for i in range(0, len(data), batch_size):
         batch = data[i:i + batch_size]
         # Your code here (similar to the other insert but the data you use here is called "batch" - see the line before
+
+        # First row - header (TagID from the different data points)
+        if i == 0:
+            tag_ids = batch[0][1:]  # TagIDs from second column onward
+            continue
+
+        # First column - Timestamp
+        # All other cells - Values
+        # Flatten using nested list comprehension (single pass)
+        records = [
+            (tag_id, row[0], value)
+            for row in batch
+            for tag_id, value in zip(tag_ids, row[1:])
+        ]
+
+        cursor.executemany(
+            f'INSERT OR IGNORE INTO {table_name} (TagID, Timestamp, Value) VALUES (?, ?, ?)',
+            records
+        )
         conn.commit()
 
     # Close transaction
@@ -77,8 +104,14 @@ def fetch_all_data_floor_counter_values(conn):
     # Example: SELECT * FROM users WHERE name LIKE 'John%';
     # John% means: All names that begin with “John” and have any characters after them.
     # So this example select selects all attributes stored in the table users where the name starts with John
+    # Query 1: Get all data where the TagID belongs to the EnergyMeters where the "Description_German" Field consists of "2P1_Gesamt_OG" and the "Unit" is "MWh"
+    # (this will provide the energy counter values of all floors of the building)
     cursor.execute(f'''
-        
+        SELECT ev.TagID, ev.Timestamp, ev.Value 
+        FROM EnergyMeterValues ev
+        WHERE ev.TagID = em.TagID
+            AND ev.Description_German LIKE '%2P1_Gesamt_OG%'
+            AND ev.Unit = 'MWh';
     ''')
     conn.commit()
 
