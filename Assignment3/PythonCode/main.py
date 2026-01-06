@@ -3,7 +3,7 @@
 import db
 import import_csv
 import os
-import pandas as pd
+# import pandas as pd
 
 # Task 2 (12 points)
 # Context of this taks is the energy monitoring system of TU Wien's (Plus-)Plus-Energy Office High-Rise Building
@@ -72,7 +72,7 @@ def main():
     import_energy_metadata(db_name)
 
     #When you finally have implemented your code, delete the comment sign in front of the following method to execute it
-    # import_energy_data(db_name)
+    import_energy_data(db_name)
 
 
 
@@ -89,11 +89,6 @@ def import_energy_metadata(db_name):
     # CSV import for the database !CHANGE the name to the directory at your OS!
     cwd = os.getcwd()
 
-    # Reading UTF-8 CSV
-    # df = pd.read_csv(cwd + '/Metainformation_ElectricEnergyMeter.csv', encoding='utf-8')
-    #
-    # # Writing UTF-8 CSV
-    # df.to_csv('output.csv', encoding='utf-8', index=False)
     csv_data = import_csv.read_csv(cwd + '/Metainformation_ElectricEnergyMeter.csv')
     db.insert_data_from_csv(conn, table_name, csv_data)
 

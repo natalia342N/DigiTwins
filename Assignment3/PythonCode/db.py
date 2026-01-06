@@ -41,17 +41,18 @@ def close_db(conn):
 
 def create_table_energy_values(conn, table_name):
     """Create table with specified table name - be aware of the rest is hardcoded."""
-    #For timestamps you will need as type DATETIME
+    # For timestamps you will need as type DATETIME
     cursor = conn.cursor()
     #Your code here
     cursor.execute(f'''
         CREATE TABLE IF NOT EXISTS {table_name} (
-            TagID INTEGER NOT NULL UNIQUE PRIMARY KEY,
-            Timestamp DATETIME NOT NULL PRIMARY KEY,
-            Value REAL NOT NULL,
+            TagID INTEGER NOT NULL,
+            Timestamp DATETIME NOT NULL,
+            Value REAL,
+            PRIMARY KEY (TagID, Timestamp)
         );
     ''')
-    conn.commit()
+    # setting primary key afterwards to have one on both fields
     conn.commit()
 
 def insert_data_from_energy_values_csv(conn, table_name, data):
@@ -63,16 +64,15 @@ def insert_data_from_energy_values_csv(conn, table_name, data):
     # Transaction Begin
     cursor.execute('BEGIN TRANSACTION;')
 
+    # First row - header (TagID from the different data points)
+    # I am allowing myself to add something before "# Your code here" to make it more efficient
+    tag_ids = data[0][1:]
+
     # Add Data via Batch
     batch_size = 10000
-    for i in range(0, len(data), batch_size):
+    for i in range(1, len(data), batch_size):  # starting at 1 to skip header, tag_ids already extracted
         batch = data[i:i + batch_size]
         # Your code here (similar to the other insert but the data you use here is called "batch" - see the line before
-
-        # First row - header (TagID from the different data points)
-        if i == 0:
-            tag_ids = batch[0][1:]  # TagIDs from second column onward
-            continue
 
         # First column - Timestamp
         # All other cells - Values
@@ -87,7 +87,6 @@ def insert_data_from_energy_values_csv(conn, table_name, data):
             f'INSERT OR IGNORE INTO {table_name} (TagID, Timestamp, Value) VALUES (?, ?, ?)',
             records
         )
-        conn.commit()
 
     # Close transaction
     conn.commit()
@@ -104,14 +103,14 @@ def fetch_all_data_floor_counter_values(conn):
     # Example: SELECT * FROM users WHERE name LIKE 'John%';
     # John% means: All names that begin with “John” and have any characters after them.
     # So this example select selects all attributes stored in the table users where the name starts with John
+
     # Query 1: Get all data where the TagID belongs to the EnergyMeters where the "Description_German" Field consists of "2P1_Gesamt_OG" and the "Unit" is "MWh"
     # (this will provide the energy counter values of all floors of the building)
-    cursor.execute(f'''
+    cursor.execute('''
         SELECT ev.TagID, ev.Timestamp, ev.Value 
-        FROM EnergyMeterValues ev
-        WHERE ev.TagID = em.TagID
-            AND ev.Description_German LIKE '%2P1_Gesamt_OG%'
-            AND ev.Unit = 'MWh';
+        FROM EnergyMeterValues ev JOIN EnergyMeter em ON ev.TagID = em.TagID
+        WHERE em.Description_German LIKE '%2P1_Gesamt_OG%'
+            AND em.Unit = 'MWh';
     ''')
     conn.commit()
 
@@ -129,9 +128,17 @@ def fetch_average_day_power_floors(conn):
     # for making clear in which table you are searching which columns use some characters to identify your table:
     # Example select a.name, b.address from user a, addressinformation b where a.id=b.id will give you the name stored in the user table, the address stored in the addressinformation table where the id exists in both tables
 
+    # Query 2: Get the average of the day for each floor
+    # (You will need the rows where the "Description_German" Field consists of "2P1_Gesamt_OG" and the "Unit" is "W")
+
     cursor.execute(f'''
-            
+            SELECT ev.TagID, Date(ev.Timestamp) AS day, AVG(ev.Value) AS average_value
+            FROM EnergyMeterValues ev JOIN EnergyMeter em ON ev.TagID = em.TagID
+            WHERE em.Description_German LIKE '%2P1_Gesamt_OG%'
+                AND em.Unit = 'W'
+            GROUP BY ev.TagID, day;
         ''')
     conn.commit()
 
     return cursor.fetchall()
+
