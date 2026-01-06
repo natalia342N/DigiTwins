@@ -55,6 +55,7 @@ def create_table_energy_values(conn, table_name):
     # setting primary key afterwards to have one on both fields
     conn.commit()
 
+
 def insert_data_from_energy_values_csv(conn, table_name, data):
     """Insert data from csv file to specified table - be aware of the rest is hardcoded"""
     cursor = conn.cursor()
@@ -64,29 +65,13 @@ def insert_data_from_energy_values_csv(conn, table_name, data):
     # Transaction Begin
     cursor.execute('BEGIN TRANSACTION;')
 
-    # First row - header (TagID from the different data points)
-    # I am allowing myself to add something before "# Your code here" to make it more efficient
-    tag_ids = data[0][1:]
-
     # Add Data via Batch
     batch_size = 10000
-    for i in range(1, len(data), batch_size):  # starting at 1 to skip header, tag_ids already extracted
+    for i in range(0, len(data), batch_size):  # starting at 1 to skip header, tag_ids already extracted
         batch = data[i:i + batch_size]
         # Your code here (similar to the other insert but the data you use here is called "batch" - see the line before
-
-        # First column - Timestamp
-        # All other cells - Values
-        # Flatten using nested list comprehension (single pass)
-        records = [
-            (tag_id, row[0], value)
-            for row in batch
-            for tag_id, value in zip(tag_ids, row[1:])
-        ]
-
-        cursor.executemany(
-            f'INSERT OR IGNORE INTO {table_name} (TagID, Timestamp, Value) VALUES (?, ?, ?)',
-            records
-        )
+        # data format is [('tag_id', datetime.datetime(), value), (),...] from the special import
+        cursor.executemany(f"INSERT OR IGNORE INTO {table_name} (TagID, Timestamp, Value) VALUES (?, ?, ?)", batch)
 
     # Close transaction
     conn.commit()
